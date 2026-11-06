@@ -43,6 +43,9 @@ def main() -> int:
             cwd=ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=dict(os.environ, PYTHONIOENCODING="utf-8"),
             timeout=180,
         )
         ok = r.returncode == 0 and f"module {name[:2]} OK" in r.stdout
