@@ -118,8 +118,17 @@ def main() -> None:
         unknown = [ln for ln in listeners() if ln.pid is None]
         print(f"5. listeners with an unidentified owner: {len(unknown)}")
     finally:
+        # On Windows a venv's python.exe is a launcher that runs the real interpreter as a
+        # child, so killing only server.pid can leave the listener alive. Kill the family.
+        try:
+            kids = psutil.Process(server.pid).children(recursive=True)
+        except psutil.NoSuchProcess:
+            kids = []  # the server already exited, so there is nothing to clean up
+        for kid in kids:
+            kid.kill()
         server.kill()
         server.wait()
+        psutil.wait_procs(kids, timeout=5)
         if server.stdout:
             server.stdout.close()
 
